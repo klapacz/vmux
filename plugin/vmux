@@ -1,4 +1,4 @@
-#!/bin/env sh
+#!/bin/sh
 session_prefix="vmux-session-"
 if [ $# -gt 0 ] && [ "$1" = list ]
 then
