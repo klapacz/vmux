@@ -6,6 +6,10 @@ import signal
 import pynvim
 import sys
 
+if "NVIM_LISTEN_ADDRESS" not in os.environ:
+    os.environ['EDITOR'] = sys.argv[0]
+    os.execvp("nvim", ["nvim"] + sys.argv[1:])
+
 if len(sys.argv) != 2:
     print(f"usage: vmux-editor file")
     exit(0)
