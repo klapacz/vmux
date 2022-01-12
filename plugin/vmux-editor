@@ -1,14 +1,28 @@
-#!/bin/sh
-echo opening "$@"
-which md5sum > /dev/null 2>&1 && md5cmd=md5sum || md5cmd=md5
-done_file_path=/tmp/$(date +%s)_$(echo "$@" | $md5cmd | cut -d\  -f1)
-echo enter when file is saved
-vmux_send ":let g:vmux_edited_file_path = \"$@\""
-vmux_send ":let g:vmux_done_file_path = \"$done_file_path\""
-vmux_send ':winc l|split '"$@"
-vmux_send ":call VmuxAddDoneEditingCallback()"
-echo waiting for $done_file_path to be closed...
-while [ ! -e "$done_file_path" ]
-do
-sleep 0.2
-done
+#!/usr/bin/env python3
+
+from threading import Event
+import os
+import signal
+import pynvim
+import sys
+
+if len(sys.argv) != 2:
+    print(f"usage: vmux-editor file")
+    exit(0)
+
+nvim = pynvim.attach('socket', path=os.getenv('NVIM_LISTEN_ADDRESS'))
+
+file = os.path.abspath(sys.argv[1])
+print(f"opening {file}, waiting for close")
+nvim.command(f"vsplit {file}")
+
+pid = os.getpid()
+bufid = nvim.funcs.bufwinid(file)
+nvim.command(f"autocmd WinClosed {bufid} ++once silent! !kill -s SIGQUIT {pid}")
+
+def sigterm_handler(*_):
+    exit(0)
+
+signal.signal(signal.SIGQUIT, sigterm_handler)
+
+Event().wait()
