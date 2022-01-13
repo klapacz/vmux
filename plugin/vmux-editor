@@ -1,32 +1,7 @@
-#!/usr/bin/env python3
+#!/bin/sh
+if [ -z "$NVIM_LISTEN_ADDRESS" ]; then
+  EDITOR="$0" nvim $*
+  exit
+fi
 
-from threading import Event
-import os
-import signal
-import pynvim
-import sys
-
-if "NVIM_LISTEN_ADDRESS" not in os.environ:
-    os.environ['EDITOR'] = sys.argv[0]
-    os.execvp("nvim", ["nvim"] + sys.argv[1:])
-
-if len(sys.argv) != 2:
-    print(f"usage: vmux-editor file")
-    exit(0)
-
-nvim = pynvim.attach('socket', path=os.getenv('NVIM_LISTEN_ADDRESS'))
-
-file = os.path.abspath(sys.argv[1])
-print(f"opening {file}, waiting for close")
-nvim.command(f"vsplit {file}")
-
-pid = os.getpid()
-bufid = nvim.funcs.bufwinid(file)
-nvim.command(f"autocmd WinClosed {bufid} ++once silent! !kill -s SIGQUIT {pid}")
-
-def sigterm_handler(*_):
-    exit(0)
-
-signal.signal(signal.SIGQUIT, sigterm_handler)
-
-Event().wait()
+nvr -cc vsplit --remote-wait +'set bufhidden=delete' $*

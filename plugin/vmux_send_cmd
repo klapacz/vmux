@@ -1,3 +1,0 @@
-# make sure the shell and vim working directory are aligned
-vmux_send :tcd $PWD
-vmux_send :$(basename $0) "$@"
